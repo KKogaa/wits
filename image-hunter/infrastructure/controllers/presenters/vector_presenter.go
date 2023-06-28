@@ -3,17 +3,17 @@ package presenters
 import "github.com/KKogaa/image-hunter/domain/entities"
 
 type VectorPresenter struct {
-	Vector     []float32
-	Algorithm  string
-	Path       string
-	Similarity float32
+	Vector     []float32 `json:"vector"`
+	Algorithm  string    `json:"algorithm"`
+	Path       string    `json:"path"`
+	Similarity float32   `json:"similarity"`
 }
 
 func NewVectorPresenter(vector *entities.Vector) *VectorPresenter {
 	return &VectorPresenter{
-		Vector:    vector.Vector,
-		Algorithm: vector.Algorithm,
-		Path:      vector.Path,
-        Similarity:  vector.Similarity,
+		Vector:     vector.Vector,
+		Algorithm:  vector.Algorithm,
+		Path:       vector.Path,
+		Similarity: vector.Similarity,
 	}
 }
