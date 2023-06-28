@@ -3,6 +3,7 @@ package minioclient
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"log"
 	"time"
 
@@ -17,6 +18,12 @@ type MinioClient struct {
 	client *minio.Client
 }
 
+func GenerateId(text string) string {
+	return string(sha256.New().Sum([]byte(text)))
+}
+
+//TODO: change implementation to return string instead of struct
+//TODO: later refactor move this to a file storage service
 func NewMinioClient(config *config.Config) (*MinioClient, error) {
 
 	useSSL := false
@@ -50,24 +57,26 @@ func NewMinioClient(config *config.Config) (*MinioClient, error) {
 
 func (c MinioClient) SaveObject(content *entities.Content) (*entities.Content, error) {
 
+	content.ID = GenerateId(content.Name)
+
 	contentType := "images/jpeg"
 	objectSize := len(content.Data)
 
 	reader := bytes.NewReader(content.Data)
 
 	info, err := c.client.PutObject(context.Background(),
-		c.config.MINIO_BUCKET_NAME, content.Name, reader, int64(objectSize),
+		c.config.MINIO_BUCKET_NAME, content.ID, reader, int64(objectSize),
 		minio.PutObjectOptions{ContentType: contentType})
 
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("successfully uploaded %s of size %d\n", content.Name,
+	log.Printf("successfully uploaded %s of size %d\n", content.ID,
 		info.Size)
 
 	presignedUrl, err := c.client.PresignedGetObject(context.Background(),
-		c.config.MINIO_BUCKET_NAME, content.Name, time.Duration(7*24)*time.Hour,
+		c.config.MINIO_BUCKET_NAME, content.ID, time.Duration(7*24)*time.Hour,
 		nil)
 
 	if err != nil {
@@ -79,4 +88,22 @@ func (c MinioClient) SaveObject(content *entities.Content) (*entities.Content, e
 	log.Printf("obtained presignedUrl: %s\n", presignedUrl.String())
 
 	return content, nil
+}
+
+func (c MinioClient) GetObject(contentId string) (*entities.Content, error) {
+
+	presignedUrl, err := c.client.PresignedGetObject(context.Background(),
+		c.config.MINIO_BUCKET_NAME, contentId, time.Duration(7*24)*time.Hour,
+		nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("obtained presignedUrl: %s\n", presignedUrl.String())
+
+	return &entities.Content{
+		ID:   contentId,
+		Path: presignedUrl.String(),
+	}, nil
 }
