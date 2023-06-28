@@ -94,8 +94,6 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 		return nil, fmt.Errorf("could not search points: %v", err)
 	}
 
-	log.Printf("found points: %s", unfilteredSearchResult.GetResult())
-
 	var vectors []*entities.Vector
 	for _, result := range unfilteredSearchResult.Result {
 		payloadValue := result.Payload["url"]
