@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/KKogaa/image-hunter/docs"
+	"github.com/gin-contrib/cors"
 
 	"github.com/KKogaa/image-hunter/infrastructure/config"
 
@@ -31,6 +32,11 @@ type Server struct {
 
 func NewServer(config *config.Config) *Server {
 	router := gin.Default()
+
+	//adding middleware
+	router.Use(cors.Default())
+
+	//injecting infrastructure to usecases
 	hasherClient := clipclient.NewClipClient(config)
 
 	minioClient, err := minioclient.NewMinioClient(config)
