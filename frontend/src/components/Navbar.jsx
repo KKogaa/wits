@@ -4,12 +4,12 @@ export const Navbar = () => {
 
   return (
     <div
-      class="mx-auto flex h-16 items-center gap-8 px-4 bg-indigo-100 sm:px-6 lg:px-8"
+      className="mx-auto flex h-16 items-center gap-8 px-4 bg-indigo-100 sm:px-6 lg:px-8"
     >
       <Link className="bg-indigo-400 rounded p-3 text-indigo-900 font-bold" to={"/"}>WITS 🧠</Link>
 
-      <div class="flex flex-1 items-center justify-end md:justify-between">
-        <ul class="flex items-center gap-6 text-sm">
+      <div className="flex flex-1 items-center justify-end md:justify-between">
+        <ul className="flex items-center gap-6 text-sm">
           <Link className="text-indigo-900 font-bold" to={"/collection"}>Collection</Link>
         </ul>
 

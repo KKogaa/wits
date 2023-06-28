@@ -6,18 +6,18 @@ import (
 )
 
 type SaveContentUsecase struct {
-	hasherClient     clientinterfaces.HasherClient
-	osClient         clientinterfaces.ObjectStorageClient
-	vsClient clientinterfaces.VectorStorageClient
+	hasherClient clientinterfaces.HasherClient
+	osClient     clientinterfaces.ObjectStorageClient
+	vsClient     clientinterfaces.VectorStorageClient
 }
 
 func NewSaveContentUsecase(hasherClient clientinterfaces.HasherClient,
 	osClient clientinterfaces.ObjectStorageClient,
 	vsClient clientinterfaces.VectorStorageClient) *SaveContentUsecase {
 	return &SaveContentUsecase{
-		hasherClient:     hasherClient,
-		osClient:         osClient,
-		vsClient: vsClient,
+		hasherClient: hasherClient,
+		osClient:     osClient,
+		vsClient:     vsClient,
 	}
 }
 
@@ -55,17 +55,17 @@ func (s SaveContentUsecase) SaveImageUrl(imageUrl string,
 		return nil, err
 	}
 
-	vector.Path = imageUrl 
+	vector.Path = imageUrl
 
 	if _, err := s.vsClient.SaveVector(vector); err != nil {
 		return nil, err
 	}
 
-    savedContent := &entities.Content{
-        Name: imageName,
-        Path: imageUrl,
-        Vectors: []*entities.Vector{vector},
-    }
+	savedContent := &entities.Content{
+		Name:    imageName,
+		Path:    imageUrl,
+		Vectors: []*entities.Vector{vector},
+	}
 
 	return savedContent, nil
 }

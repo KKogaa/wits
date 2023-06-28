@@ -2,7 +2,6 @@ import { Footer } from "./components/Footer"
 import { Navbar } from "./components/Navbar"
 import { SearchBar } from "./components/SearchBar"
 import { Routed } from "./components/Routed"
-// import { Routed } from "./components/Routed"
 
 function App() {
 
@@ -10,9 +9,6 @@ function App() {
     <>
       <Navbar />
       <Routed />
-      {/* <Routes /> */}
-      {/* <SearchBar /> */}
-      {/* <Footer /> */}
     </>
   )
 }
