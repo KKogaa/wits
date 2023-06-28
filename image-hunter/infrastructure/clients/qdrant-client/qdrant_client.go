@@ -3,7 +3,6 @@ package qdrantclient
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/KKogaa/image-hunter/domain/entities"
 	"github.com/KKogaa/image-hunter/infrastructure/config"
