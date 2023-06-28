@@ -40,7 +40,7 @@ func NewMinioClient(config *config.Config) (*MinioClient, error) {
 		if !(errBucketExists == nil && exists) {
 			return &MinioClient{}, bucketErr
 		}
-    }
+	}
 
 	return &MinioClient{
 		config: config,
@@ -67,7 +67,7 @@ func (c MinioClient) SaveObject(content *entities.Content) (*entities.Content, e
 		info.Size)
 
 	presignedUrl, err := c.client.PresignedGetObject(context.Background(),
-		c.config.MINIO_BUCKET_NAME, content.Name, time.Duration(24)*time.Hour,
+		c.config.MINIO_BUCKET_NAME, content.Name, time.Duration(7*24)*time.Hour,
 		nil)
 
 	if err != nil {
