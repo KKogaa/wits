@@ -39,7 +39,15 @@ func NewMinioClient(config *config.Config) (*MinioClient, error) {
 	}
 
 	if bucketErr := minioClient.MakeBucket(context.Background(), config.MINIO_BUCKET_NAME,
-		minio.MakeBucketOptions{Region: config.MINIO_LOCATION}); bucketErr != nil {
+		minio.MakeBucketOptions{
+			Region:        config.MINIO_LOCATION,
+			ObjectLocking: false,
+		}); bucketErr != nil {
+
+		err := minioClient.SetBucketPolicy(context.Background(), config.MINIO_BUCKET_NAME, `{"Version":"2012-10-17","Statement":[{"Action":["s3:GetObject"],"Effect":"Allow","Principal":"*","Resource":["arn:aws:s3:::`+config.MINIO_BUCKET_NAME+`/*"]}],"Version":"2012-10-17"}`)
+		if err != nil {
+			return nil, err
+		}
 
 		exists, errBucketExists := minioClient.BucketExists(context.Background(),
 			config.MINIO_BUCKET_NAME)

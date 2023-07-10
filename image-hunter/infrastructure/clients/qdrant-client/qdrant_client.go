@@ -110,6 +110,7 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 
 func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, error) {
 
+	//TODO: change upsert to a unique id
 	upsertPoints := []*pb.PointStruct{
 		{
 			Id: &pb.PointId{
@@ -146,5 +147,10 @@ func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, err
 	}
 
 	return vector, nil
+
+}
+
+func (q QdrantClient) GetAllVectors() ([]*entities.Vector, error) {
+	return nil, nil
 
 }

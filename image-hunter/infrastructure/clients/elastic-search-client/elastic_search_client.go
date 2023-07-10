@@ -75,8 +75,6 @@ func InitIndex(esClient *elasticsearch.Client, indexName string) error {
       }
     }`
 
-
-
 	indexExistsRes, err := esClient.Indices.Exists([]string{indexName})
 	if err != nil {
 		return err
@@ -245,4 +243,41 @@ func (e ElasticSearchClient) SaveVector(vector *entities.Vector) (*entities.Vect
 	log.Printf("sucess uploading to elasticsearch")
 
 	return vector, nil
+}
+
+func (e ElasticSearchClient) GetAllVectors() ([]*entities.Vector, error) {
+
+	req := esapi.SearchRequest{
+		Index: []string{e.config.ELASTIC_SEARCH_INDEX_NAME},
+		Body:  nil,
+	}
+
+	res, err := req.Do(context.Background(), e.client)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("error occured while searching for vectors: %s",
+			res.String())
+	}
+
+	var searchResponse SearchResponse
+	err = json.NewDecoder(res.Body).Decode(&searchResponse)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing search response: %s", err)
+	}
+
+	var vectors []*entities.Vector
+	for _, hit := range searchResponse.Hits.Hits {
+		vectors = append(vectors, &entities.Vector{
+			ID:         hit.ID,
+			Vector:     hit.Source.Embedding,
+			Path:       hit.Source.Text,
+			Similarity: hit.Score,
+		})
+	}
+
+	return vectors, nil
 }

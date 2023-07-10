@@ -14,9 +14,9 @@ import (
 	"github.com/KKogaa/image-hunter/infrastructure/config"
 
 	"github.com/KKogaa/image-hunter/infrastructure/clients/clip-client"
-	// "github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
+	"github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/minio-client"
-	"github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
+	// "github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
 	"github.com/KKogaa/image-hunter/infrastructure/controllers"
 	"github.com/KKogaa/image-hunter/usecases"
 	"github.com/gin-gonic/gin"
@@ -28,6 +28,7 @@ type Server struct {
 	router           *gin.Engine
 	searchController *controllers.SearchController
 	saveController   *controllers.SaveController
+	vectorController *controllers.VectorController
 }
 
 func NewServer(config *config.Config) *Server {
@@ -44,26 +45,31 @@ func NewServer(config *config.Config) *Server {
 		log.Fatalf("error in minio client: %s", err.Error())
 	}
 
-	// esClient, err := elasticsearchclient.NewElasticSearchClient(config)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	qdrantClient, err := qdrantclient.NewQdrantClient(config)
+	esClient, err := elasticsearchclient.NewElasticSearchClient(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, qdrantClient)
+	// qdrantClient, err := qdrantclient.NewQdrantClient(config)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, esClient)
 	searchController := controllers.NewSearchController(searchImageUsecase)
 
 	saveContentUsecase := usecases.NewSaveContentUsecase(hasherClient,
-		minioClient, qdrantClient)
+		minioClient, esClient)
 	saveController := controllers.NewSaveController(saveContentUsecase)
+
+	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(esClient)
+	vectorController := controllers.NewVectorController(getAllVectorsUsecase)
 
 	return &Server{
 		router:           router,
 		searchController: searchController,
 		saveController:   saveController,
+		vectorController: vectorController,
 	}
 }
 
@@ -71,6 +77,7 @@ func SetupRoutes(server *Server) {
 	// docs.SwaggerInfo.BasePath = "/api/v1"
 	server.searchController.SetupRoutes(server.router)
 	server.saveController.SetupRoutes(server.router)
+	server.vectorController.SetupRoutes(server.router)
 	server.router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }
 
