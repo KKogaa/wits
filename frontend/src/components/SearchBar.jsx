@@ -19,9 +19,6 @@ export const SearchBar = () => {
     <div className="flex flex-col justify-center items-center">
       <h1 className="font-bold text-5xl m-5 mt-20">What's the sauce?</h1>
       <div className="mx-auto">
-        {/* <
-        <Results
-          utton>Upload</button> */}
         <input value={text}
           type="text"
           className="bg-indigo-100 border-black center text-center text-indigo-900 p-1 pl-20 pr-20"
