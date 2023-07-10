@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+from transformers.models.auto.processing_auto import AutoProcessor
+from transformers.models.clip.modeling_clip import CLIPModel
 from app.domain.models import Content
 from app.application.usecases import GetVectorUrl, GetVectorText
 from app.infrastructure.ml_models import Vectorizer
@@ -11,9 +13,13 @@ import urllib.parse
 
 vectorizer_router = APIRouter()
 
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = AutoProcessor.from_pretrained(
+            "openai/clip-vit-base-patch32"
+        )
 
 def setup_vector_url_usecase():
-    return GetVectorUrl(vectorizer=Vectorizer(), image_client=ImageClient())
+    return GetVectorUrl(vectorizer=Vectorizer(model, processor), image_client=ImageClient())
 
 
 @vectorizer_router.get("/vectorize/image-url/", tags=["vectorize"])
@@ -27,7 +33,7 @@ async def get_vector_from_image_url(
 
 
 def setup_vector_text_usecase():
-    return GetVectorText(vectorizer=Vectorizer())
+    return GetVectorText(vectorizer=Vectorizer(model, processor))
 
 
 @vectorizer_router.get("/vectorize/text/", tags=["vectorize"])

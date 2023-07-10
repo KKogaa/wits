@@ -7,11 +7,9 @@ from fastapi import HTTPException
 
 
 class Vectorizer(VectorizerInterface):
-    def __init__(self):
-        self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-        self.processor = AutoProcessor.from_pretrained(
-            "openai/clip-vit-base-patch32"
-        )
+    def __init__(self, model: CLIPModel, processor: AutoProcessor):
+        self.model = model
+        self.processor = processor
 
     async def image_to_vector(self, image) -> List[float]:
         try:
