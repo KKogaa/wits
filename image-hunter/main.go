@@ -14,9 +14,9 @@ import (
 	"github.com/KKogaa/image-hunter/infrastructure/config"
 
 	"github.com/KKogaa/image-hunter/infrastructure/clients/clip-client"
-	"github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
+	// "github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/minio-client"
-	// "github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
+	"github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
 	"github.com/KKogaa/image-hunter/infrastructure/controllers"
 	"github.com/KKogaa/image-hunter/usecases"
 	"github.com/gin-gonic/gin"
@@ -45,24 +45,24 @@ func NewServer(config *config.Config) *Server {
 		log.Fatalf("error in minio client: %s", err.Error())
 	}
 
-	esClient, err := elasticsearchclient.NewElasticSearchClient(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// qdrantClient, err := qdrantclient.NewQdrantClient(config)
+	// esClient, err := elasticsearchclient.NewElasticSearchClient(config)
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 
-	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, esClient)
+	qdrantClient, err := qdrantclient.NewQdrantClient(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, qdrantClient)
 	searchController := controllers.NewSearchController(searchImageUsecase)
 
 	saveContentUsecase := usecases.NewSaveContentUsecase(hasherClient,
-		minioClient, esClient)
+		minioClient, qdrantClient)
 	saveController := controllers.NewSaveController(saveContentUsecase)
 
-	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(esClient)
+	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(qdrantClient)
 	vectorController := controllers.NewVectorController(getAllVectorsUsecase)
 
 	return &Server{

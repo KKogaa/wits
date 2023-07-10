@@ -2,6 +2,7 @@ package qdrantclient
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/KKogaa/image-hunter/domain/entities"
@@ -85,7 +86,7 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 	unfilteredSearchResult, err := client.Search(context.Background(), &pb.SearchPoints{
 		CollectionName: q.config.QDRANT_COLLECTION_NAME,
 		Vector:         vector.Vector,
-		Limit:          3,
+		Limit:          20,
 		WithVectors:    &pb.WithVectorsSelector{SelectorOptions: &pb.WithVectorsSelector_Enable{Enable: true}},
 		WithPayload:    &pb.WithPayloadSelector{SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true}},
 	})
@@ -108,13 +109,22 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 
 }
 
+func GenerateId(text string) int64 {
+	hash := sha256.New().Sum([]byte(text))
+
+	var result int64
+	for _, b := range hash {
+		result = (result << 8) | int64(b)
+	}
+	return result
+}
+
 func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, error) {
 
-	//TODO: change upsert to a unique id
 	upsertPoints := []*pb.PointStruct{
 		{
 			Id: &pb.PointId{
-				PointIdOptions: &pb.PointId_Num{Num: 22},
+				PointIdOptions: &pb.PointId_Num{Num: uint64(GenerateId(vector.Path))},
 			},
 			Vectors: &pb.Vectors{
 				VectorsOptions: &pb.Vectors_Vector{Vector: &pb.Vector{Data: vector.Vector}},

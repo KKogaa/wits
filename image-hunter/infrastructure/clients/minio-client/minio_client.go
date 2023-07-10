@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"log"
 	"time"
 
@@ -19,7 +20,9 @@ type MinioClient struct {
 }
 
 func GenerateId(text string) string {
-	return string(sha256.New().Sum([]byte(text)))
+	hash := sha256.New().Sum([]byte(text))
+	hashString := hex.EncodeToString(hash[:])
+	return hashString
 }
 
 //TODO: change implementation to return string instead of struct
