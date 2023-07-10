@@ -161,6 +161,41 @@ func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, err
 }
 
 func (q QdrantClient) GetAllVectors() ([]*entities.Vector, error) {
-	return nil, nil
+	vector := make([]float32, 512)
 
+	for i := 0; i < 512; i++ {
+		vector[i] = 0.0
+	}
+
+	conn, err := GetConnection(q.config.QDRANT_ENDPOINT)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	client := pb.NewPointsClient(conn)
+
+	unfilteredSearchResult, err := client.Search(context.Background(), &pb.SearchPoints{
+		CollectionName: q.config.QDRANT_COLLECTION_NAME,
+		Vector:         vector,
+		Limit:          100,
+		WithVectors:    &pb.WithVectorsSelector{SelectorOptions: &pb.WithVectorsSelector_Enable{Enable: true}},
+		WithPayload:    &pb.WithPayloadSelector{SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true}},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not search points: %v", err)
+	}
+
+	var vectors []*entities.Vector
+	for _, result := range unfilteredSearchResult.Result {
+		payloadValue := result.Payload["url"]
+		vectors = append(vectors, &entities.Vector{
+			ID:         result.Id.String(),
+			Path:       payloadValue.GetStringValue(),
+			Similarity: result.GetScore(),
+			Vector:     result.Vectors.GetVector().Data,
+		})
+
+	}
+	return vectors, nil
 }
