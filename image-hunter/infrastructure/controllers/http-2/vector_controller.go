@@ -1,10 +1,10 @@
-package controllers
+package http2
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/KKogaa/image-hunter/infrastructure/controllers/presenters"
+	"github.com/KKogaa/image-hunter/infrastructure/controllers/http-2/presenters"
 
 	"github.com/KKogaa/image-hunter/usecases"
 	"github.com/gin-gonic/gin"

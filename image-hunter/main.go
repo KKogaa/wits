@@ -17,7 +17,7 @@ import (
 	// "github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/minio-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
-	"github.com/KKogaa/image-hunter/infrastructure/controllers"
+	"github.com/KKogaa/image-hunter/infrastructure/controllers/http-2"
 	"github.com/KKogaa/image-hunter/usecases"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
@@ -26,9 +26,9 @@ import (
 
 type Server struct {
 	router           *gin.Engine
-	searchController *controllers.SearchController
-	saveController   *controllers.SaveController
-	vectorController *controllers.VectorController
+	searchController *http2.SearchController
+	saveController   *http2.SaveController
+	vectorController *http2.VectorController
 }
 
 func NewServer(config *config.Config) *Server {
@@ -56,14 +56,14 @@ func NewServer(config *config.Config) *Server {
 	}
 
 	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, qdrantClient)
-	searchController := controllers.NewSearchController(searchImageUsecase)
+	searchController := http2.NewSearchController(searchImageUsecase)
 
 	saveContentUsecase := usecases.NewSaveContentUsecase(hasherClient,
 		minioClient, qdrantClient)
-	saveController := controllers.NewSaveController(saveContentUsecase)
+	saveController := http2.NewSaveController(saveContentUsecase)
 
 	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(qdrantClient)
-	vectorController := controllers.NewVectorController(getAllVectorsUsecase)
+	vectorController := http2.NewVectorController(getAllVectorsUsecase)
 
 	return &Server{
 		router:           router,

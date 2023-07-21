@@ -1,12 +1,12 @@
-package controllers
+package http2
 
 import (
 	"bytes"
 	"io"
 	"net/http"
 
-	"github.com/KKogaa/image-hunter/infrastructure/controllers/dtos"
-	"github.com/KKogaa/image-hunter/infrastructure/controllers/presenters"
+	"github.com/KKogaa/image-hunter/infrastructure/controllers/http-2/dtos"
+	"github.com/KKogaa/image-hunter/infrastructure/controllers/http-2/presenters"
 	"github.com/KKogaa/image-hunter/usecases"
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +24,7 @@ func NewSaveController(saveUsecase *usecases.SaveContentUsecase) *SaveController
 func (s SaveController) SetupRoutes(router *gin.Engine) {
 	router.POST("/upload/file", s.SaveContentFromImage)
 	router.POST("/upload/url", s.SaveContentFromImageUrl)
+	router.POST("/upload/batch", s.SaveContentFromImageUrl)
 }
 
 func (s SaveController) SaveContentFromImage(ctx *gin.Context) {
