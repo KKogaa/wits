@@ -42,7 +42,7 @@ export const Collection = () => {
       </div>
       <div className="flex flex-row flex-wrap justify-center">
         {data.map((item) => (
-          <Card path={item.path} />
+          <Card url={item.path} />
         ))}
       </div>
 

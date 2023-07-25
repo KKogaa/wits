@@ -69,7 +69,7 @@ export const Upload = () => {
 
   const handleSave = async () => {
     //TODO: limit upload to one or make enable bulk upload
-    const url = "http://localhost:8080/upload/image"
+    const url = "http://localhost:8080/upload/file"
     const form = new FormData();
     form.append('file', files[0]);
     await axios.post(url, form).then(
