@@ -23,13 +23,13 @@ func NewSearchController(searchImageUsecase *usecases.SearchImageUsecase) *Searc
 
 func (s SearchController) SetupRoutes(router *gin.Engine) {
 	router.GET("/search/text", s.SearchImageWithText)
-	router.GET("/search/image", s.SearchImageWithText)
+	router.GET("/search/image", s.SearchImageWithImageUrl)
 }
 
 func (s SearchController) SearchImageWithText(ctx *gin.Context) {
 
 	var searchTextDTO dtos.SearchTextDTO
-	if err := ctx.BindQuery(&searchTextDTO); err != nil {
+	if err := ctx.Bind(&searchTextDTO); err != nil {
 		return
 	}
 
@@ -48,10 +48,10 @@ func (s SearchController) SearchImageWithText(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, vectorsPresenter)
 }
 
-func (s SearchController) SearchImageWithImageLink(ctx *gin.Context) {
+func (s SearchController) SearchImageWithImageUrl(ctx *gin.Context) {
 
 	var searchImageLinkDTO dtos.SearchImageLinkDTO
-	if err := ctx.BindQuery(&searchImageLinkDTO); err != nil {
+	if err := ctx.Bind(&searchImageLinkDTO); err != nil {
 		return
 	}
 

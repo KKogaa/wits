@@ -7,11 +7,14 @@ import (
 
 type GetAllVectorsUsecase struct {
 	vsClient clientinterfaces.VectorStorageClient
+	osClient clientinterfaces.ObjectStorageClient
 }
 
-func NewGetAllVectorsUsecase(vsClient clientinterfaces.VectorStorageClient) *GetAllVectorsUsecase {
+func NewGetAllVectorsUsecase(vsClient clientinterfaces.VectorStorageClient,
+	osClient clientinterfaces.ObjectStorageClient) *GetAllVectorsUsecase {
 	return &GetAllVectorsUsecase{
 		vsClient: vsClient,
+		osClient: osClient,
 	}
 }
 
@@ -22,6 +25,15 @@ func (g GetAllVectorsUsecase) Execute() ([]*entities.Vector, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	for _, vector := range vectors {
+		imageUrl, err := g.osClient.GetObject(vector.ImageID)
+		if err != nil {
+			return nil, err
+		}
+		vector.ImagePath = imageUrl
+
 	}
 
 	return vectors, nil

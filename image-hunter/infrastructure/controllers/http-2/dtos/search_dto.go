@@ -1,9 +1,9 @@
 package dtos
 
 type SearchTextDTO struct {
-	Text string `json:"text"`
+	Text string `form:"text"`
 }
 
 type SearchImageLinkDTO struct {
-	Url string `json:"url"`
+	Url string `form:"url"`
 }

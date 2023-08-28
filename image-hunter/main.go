@@ -15,6 +15,7 @@ import (
 
 	"github.com/KKogaa/image-hunter/infrastructure/clients/clip-client"
 	// "github.com/KKogaa/image-hunter/infrastructure/clients/elastic-search-client"
+	"github.com/KKogaa/image-hunter/infrastructure/clients/image-download-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/minio-client"
 	"github.com/KKogaa/image-hunter/infrastructure/clients/qdrant-client"
 	"github.com/KKogaa/image-hunter/infrastructure/controllers/http-2"
@@ -45,6 +46,8 @@ func NewServer(config *config.Config) *Server {
 		log.Fatalf("error in minio client: %s", err.Error())
 	}
 
+	imageDownloadClient := imagedownloadclient.NewImageDownloadClient()
+
 	// esClient, err := elasticsearchclient.NewElasticSearchClient(config)
 	// if err != nil {
 	// 	log.Fatal(err)
@@ -55,14 +58,14 @@ func NewServer(config *config.Config) *Server {
 		log.Fatal(err)
 	}
 
-	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, qdrantClient)
+	searchImageUsecase := usecases.NewSearchImageUsecase(hasherClient, qdrantClient, minioClient)
 	searchController := http2.NewSearchController(searchImageUsecase)
 
 	saveContentUsecase := usecases.NewSaveContentUsecase(hasherClient,
-		minioClient, qdrantClient)
+		minioClient, qdrantClient, imageDownloadClient)
 	saveController := http2.NewSaveController(saveContentUsecase)
 
-	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(qdrantClient)
+	getAllVectorsUsecase := usecases.NewGetAllVectorsUsecase(qdrantClient, minioClient)
 	vectorController := http2.NewVectorController(getAllVectorsUsecase)
 
 	return &Server{
@@ -73,6 +76,20 @@ func NewServer(config *config.Config) *Server {
 	}
 }
 
+// @title Image Hunter
+// @version 0.0
+// @description
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name
+// @license.url
+
+// @host localhost:8080
+// @BasePath /
+// @query.collection.format multi
 func SetupRoutes(server *Server) {
 	// docs.SwaggerInfo.BasePath = "/api/v1"
 	server.searchController.SetupRoutes(server.router)

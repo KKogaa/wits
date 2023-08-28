@@ -1,4 +1,4 @@
-package clipclient 
+package clipclient
 
 import (
 	"encoding/json"
@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/KKogaa/image-hunter/domain/entities"
 	"github.com/KKogaa/image-hunter/infrastructure/config"
 )
 
@@ -101,14 +100,7 @@ func MakeHTTPRequest[T any](fullUrl string, httpMethod string,
 	return responseObject, nil
 }
 
-func toEntity(model ClipResponse) *entities.Vector {
-	return &entities.Vector{
-		Vector: model.Vector,
-        Algorithm: "CLIP",
-	}
-}
-
-func (c ClipClient) GetVectorFromImage(imgUrl string) (*entities.Vector, error) {
+func (c ClipClient) GetEmbeddingFromImage(imgUrl string) ([]float32, error) {
 
 	queryParamers := url.Values{}
 	queryParamers.Add("url", imgUrl)
@@ -122,11 +114,11 @@ func (c ClipClient) GetVectorFromImage(imgUrl string) (*entities.Vector, error) 
 		return nil, err
 	}
 
-	return toEntity(response), nil
+	return response.Vector, nil
 
 }
 
-func (c ClipClient) GetVectorFromText(text string) (*entities.Vector, error) {
+func (c ClipClient) GetEmbeddingFromText(text string) ([]float32, error) {
 
 	queryParamers := url.Values{}
 	queryParamers.Add("text", text)
@@ -140,6 +132,6 @@ func (c ClipClient) GetVectorFromText(text string) (*entities.Vector, error) {
 		return nil, err
 	}
 
-	return toEntity(response), nil
+	return response.Vector, nil
 
 }

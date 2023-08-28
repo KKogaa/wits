@@ -22,12 +22,12 @@ func NewSaveController(saveUsecase *usecases.SaveContentUsecase) *SaveController
 }
 
 func (s SaveController) SetupRoutes(router *gin.Engine) {
-	router.POST("/upload/file", s.SaveContentFromImage)
-	router.POST("/upload/url", s.SaveContentFromImageUrl)
-	router.POST("/upload/batch", s.SaveContentFromImageUrl)
+	router.POST("/upload/file", s.SaveFromImage)
+	router.POST("/upload/url", s.SaveFromImageUrl)
+	// router.POST("/upload/batch", s.SaveContentFromImageUrl)
 }
 
-func (s SaveController) SaveContentFromImage(ctx *gin.Context) {
+func (s SaveController) SaveFromImage(ctx *gin.Context) {
 	formFile, header, err := ctx.Request.FormFile("file")
 
 	defer formFile.Close()
@@ -42,17 +42,17 @@ func (s SaveController) SaveContentFromImage(ctx *gin.Context) {
 		return
 	}
 
-	content, err := s.saveUsecase.SaveImage(buffer.Bytes(), header.Filename)
+	vector, err := s.saveUsecase.SaveImage(buffer.Bytes(), header.Filename)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, presenters.NewContentPresenter(content))
+	ctx.JSON(http.StatusOK, presenters.NewVectorPresenter(vector))
 }
 
-func (s SaveController) SaveContentFromImageUrl(ctx *gin.Context) {
+func (s SaveController) SaveFromImageUrl(ctx *gin.Context) {
 
 	var saveContentDTO dtos.SaveContentDTO
 	if err := ctx.ShouldBindJSON(&saveContentDTO); err != nil {
@@ -60,7 +60,7 @@ func (s SaveController) SaveContentFromImageUrl(ctx *gin.Context) {
 		return
 	}
 
-	content, err := s.saveUsecase.SaveImageUrl(saveContentDTO.Url,
+	vector, err := s.saveUsecase.SaveImageUrl(saveContentDTO.Url,
 		saveContentDTO.Name)
 
 	if err != nil {
@@ -68,5 +68,5 @@ func (s SaveController) SaveContentFromImageUrl(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, presenters.NewContentPresenter(content))
+	ctx.JSON(http.StatusOK, presenters.NewVectorPresenter(vector))
 }

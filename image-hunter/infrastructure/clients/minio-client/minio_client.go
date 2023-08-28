@@ -8,7 +8,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/KKogaa/image-hunter/domain/entities"
 	"github.com/KKogaa/image-hunter/infrastructure/config"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -25,7 +24,6 @@ func GenerateId(text string) string {
 	return hashString
 }
 
-//TODO: change implementation to return string instead of struct
 //TODO: later refactor move this to a file storage service
 func NewMinioClient(config *config.Config) (*MinioClient, error) {
 
@@ -40,6 +38,7 @@ func NewMinioClient(config *config.Config) (*MinioClient, error) {
 	if clientErr != nil {
 		return &MinioClient{}, clientErr
 	}
+	log.Printf("image name: %s", text)
 
 	if bucketErr := minioClient.MakeBucket(context.Background(), config.MINIO_BUCKET_NAME,
 		minio.MakeBucketOptions{
@@ -66,55 +65,41 @@ func NewMinioClient(config *config.Config) (*MinioClient, error) {
 	}, nil
 }
 
-func (c MinioClient) SaveObject(content *entities.Content) (*entities.Content, error) {
+func (c MinioClient) SaveObject(data []byte, imageName string) (string, error) {
 
-	content.ID = GenerateId(content.Name)
+	minioId := GenerateId(imageName)
 
 	contentType := "images/jpeg"
-	objectSize := len(content.Data)
+	objectSize := len(data)
 
-	reader := bytes.NewReader(content.Data)
+	reader := bytes.NewReader(data)
 
 	info, err := c.client.PutObject(context.Background(),
-		c.config.MINIO_BUCKET_NAME, content.ID, reader, int64(objectSize),
+		c.config.MINIO_BUCKET_NAME, minioId, reader, int64(objectSize),
 		minio.PutObjectOptions{ContentType: contentType})
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	log.Printf("successfully uploaded %s of size %d\n", content.ID,
+	log.Printf("successfully uploaded %s of size %d\n", minioId,
 		info.Size)
 
-	presignedUrl, err := c.client.PresignedGetObject(context.Background(),
-		c.config.MINIO_BUCKET_NAME, content.ID, time.Duration(7*24)*time.Hour,
-		nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	content.Path = presignedUrl.String()
-
-	log.Printf("obtained presignedUrl: %s\n", presignedUrl.String())
-
-	return content, nil
+	return minioId, nil
 }
 
-func (c MinioClient) GetObject(contentId string) (*entities.Content, error) {
+func (c MinioClient) GetObject(contentId string) (string, error) {
 
 	presignedUrl, err := c.client.PresignedGetObject(context.Background(),
 		c.config.MINIO_BUCKET_NAME, contentId, time.Duration(7*24)*time.Hour,
 		nil)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	log.Printf("obtained presignedUrl: %s\n", presignedUrl.String())
 
-	return &entities.Content{
-		ID:   contentId,
-		Path: presignedUrl.String(),
-	}, nil
+	return presignedUrl.String(), nil
+
 }

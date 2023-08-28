@@ -1,8 +1,6 @@
 package clientinterfaces
 
-import "github.com/KKogaa/image-hunter/domain/entities"
-
 type ObjectStorageClient interface {
-	SaveObject(*entities.Content) (*entities.Content, error)
-	GetObject(string) (*entities.Content, error)
+	SaveObject(data []byte, name string) (string, error)
+	GetObject(imageId string) (string, error)
 }

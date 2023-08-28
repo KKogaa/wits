@@ -3,6 +3,7 @@ package qdrantclient
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/KKogaa/image-hunter/domain/entities"
@@ -58,7 +59,7 @@ func InitCollection(config *config.Config) error {
 		VectorsConfig: &pb.VectorsConfig{Config: &pb.VectorsConfig_Params{
 			Params: &pb.VectorParams{
 				Size:     uint64(embeddingSize),
-				Distance: pb.Distance_Dot,
+				Distance: pb.Distance_Cosine,
 			},
 		}},
 		OptimizersConfig: &pb.OptimizersConfigDiff{
@@ -74,7 +75,8 @@ func InitCollection(config *config.Config) error {
 
 }
 
-func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vector, error) {
+func (q QdrantClient) GetSimilarVector(embedding []float32) ([]*entities.Vector, error) {
+
 	conn, err := GetConnection(q.config.QDRANT_ENDPOINT)
 	if err != nil {
 		return nil, err
@@ -85,7 +87,7 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 
 	unfilteredSearchResult, err := client.Search(context.Background(), &pb.SearchPoints{
 		CollectionName: q.config.QDRANT_COLLECTION_NAME,
-		Vector:         vector.Vector,
+		Vector:         embedding,
 		Limit:          20,
 		WithVectors:    &pb.WithVectorsSelector{SelectorOptions: &pb.WithVectorsSelector_Enable{Enable: true}},
 		WithPayload:    &pb.WithPayloadSelector{SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true}},
@@ -96,12 +98,11 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 
 	var vectors []*entities.Vector
 	for _, result := range unfilteredSearchResult.Result {
-		payloadValue := result.Payload["url"]
 		vectors = append(vectors, &entities.Vector{
-			ID:         result.Id.String(),
-			Path:       payloadValue.GetStringValue(),
+			ID:         result.Id.GetNum(),
 			Similarity: result.GetScore(),
-			Vector:     result.Vectors.GetVector().Data,
+			Embedding:  result.Vectors.GetVector().Data,
+			ImageID:    result.Payload["imageId"].GetStringValue(),
 		})
 
 	}
@@ -109,29 +110,30 @@ func (q QdrantClient) GetSimilarVector(vector *entities.Vector) ([]*entities.Vec
 
 }
 
-func GenerateId(text string) int64 {
-	hash := sha256.New().Sum([]byte(text))
-
-	var result int64
-	for _, b := range hash {
-		result = (result << 8) | int64(b)
-	}
-	return result
+func GenerateId(text string) uint64 {
+	hash := sha256.Sum256([]byte(text))
+	return binary.BigEndian.Uint64(hash[:8])
 }
 
-func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, error) {
+func (q QdrantClient) SaveVector(imageId string, embedding []float32) (*entities.Vector, error) {
+
+	vector := entities.Vector{
+		ID:        GenerateId(imageId),
+		Embedding: embedding,
+		ImageID:   imageId,
+	}
 
 	upsertPoints := []*pb.PointStruct{
 		{
 			Id: &pb.PointId{
-				PointIdOptions: &pb.PointId_Num{Num: uint64(GenerateId(vector.Path))},
+				PointIdOptions: &pb.PointId_Num{Num: vector.ID},
 			},
 			Vectors: &pb.Vectors{
-				VectorsOptions: &pb.Vectors_Vector{Vector: &pb.Vector{Data: vector.Vector}},
+				VectorsOptions: &pb.Vectors_Vector{Vector: &pb.Vector{Data: vector.Embedding}},
 			},
 			Payload: map[string]*pb.Value{
-				"url": {
-					Kind: &pb.Value_StringValue{StringValue: vector.Path},
+				"imageId": {
+					Kind: &pb.Value_StringValue{StringValue: vector.ImageID},
 				},
 			},
 		},
@@ -156,7 +158,7 @@ func (q QdrantClient) SaveVector(vector *entities.Vector) (*entities.Vector, err
 		return nil, err
 	}
 
-	return vector, nil
+	return &vector, nil
 
 }
 
@@ -188,12 +190,11 @@ func (q QdrantClient) GetAllVectors() ([]*entities.Vector, error) {
 
 	var vectors []*entities.Vector
 	for _, result := range unfilteredSearchResult.Result {
-		payloadValue := result.Payload["url"]
 		vectors = append(vectors, &entities.Vector{
-			ID:         result.Id.String(),
-			Path:       payloadValue.GetStringValue(),
+			ID:         result.Id.GetNum(),
 			Similarity: result.GetScore(),
-			Vector:     result.Vectors.GetVector().Data,
+			Embedding:  result.Vectors.GetVector().Data,
+			ImageID:    result.Payload["imageId"].GetStringValue(),
 		})
 
 	}

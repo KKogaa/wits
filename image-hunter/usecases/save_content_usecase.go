@@ -6,66 +6,82 @@ import (
 )
 
 type SaveContentUsecase struct {
-	hasherClient clientinterfaces.HasherClient
-	osClient     clientinterfaces.ObjectStorageClient
-	vsClient     clientinterfaces.VectorStorageClient
+	hasherClient        clientinterfaces.HasherClient
+	osClient            clientinterfaces.ObjectStorageClient
+	vsClient            clientinterfaces.VectorStorageClient
+	imageDownloadClient clientinterfaces.ImageDownloadClient
 }
 
 func NewSaveContentUsecase(hasherClient clientinterfaces.HasherClient,
 	osClient clientinterfaces.ObjectStorageClient,
-	vsClient clientinterfaces.VectorStorageClient) *SaveContentUsecase {
+	vsClient clientinterfaces.VectorStorageClient,
+	imageDownloadClient clientinterfaces.ImageDownloadClient,
+) *SaveContentUsecase {
 	return &SaveContentUsecase{
-		hasherClient: hasherClient,
-		osClient:     osClient,
-		vsClient:     vsClient,
+		hasherClient:        hasherClient,
+		osClient:            osClient,
+		vsClient:            vsClient,
+		imageDownloadClient: imageDownloadClient,
 	}
 }
 
 func (s SaveContentUsecase) SaveImage(image []byte,
-	imageName string) (*entities.Content, error) {
+	imageName string) (*entities.Vector, error) {
 
-	savedContent, err := s.osClient.SaveObject(&entities.Content{
-		Name: imageName,
-		Data: image,
-	})
+	imageId, err := s.osClient.SaveObject(image, imageName)
 	if err != nil {
 		return nil, err
 	}
 
-	vector, err := s.hasherClient.GetVectorFromImage(savedContent.Path)
+	imageUrl, err := s.osClient.GetObject(imageId)
 	if err != nil {
 		return nil, err
 	}
-	vector.Path = savedContent.Path
 
-	if _, err := s.vsClient.SaveVector(vector); err != nil {
+	embedding, err := s.hasherClient.GetEmbeddingFromImage(imageUrl)
+	if err != nil {
 		return nil, err
 	}
 
-	savedContent.AppendVector(vector)
+	vector, err := s.vsClient.SaveVector(imageId, embedding)
+	if err != nil {
+		return nil, err
+	}
 
-	return savedContent, nil
+	vector.ImagePath = imageUrl
+
+	return vector, nil
 }
 
 func (s SaveContentUsecase) SaveImageUrl(imageUrl string,
-	imageName string) (*entities.Content, error) {
+	imageName string) (*entities.Vector, error) {
 
-	vector, err := s.hasherClient.GetVectorFromImage(imageUrl)
+	imageData, err := s.imageDownloadClient.GetImage(imageUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	vector.Path = imageUrl
-
-	if _, err := s.vsClient.SaveVector(vector); err != nil {
+	imageId, err := s.osClient.SaveObject(imageData, imageName)
+	if err != nil {
 		return nil, err
 	}
 
-	savedContent := &entities.Content{
-		Name:    imageName,
-		Path:    imageUrl,
-		Vectors: []*entities.Vector{vector},
+	privateImageUrl, err := s.osClient.GetObject(imageId)
+	if err != nil {
+		return nil, err
 	}
 
-	return savedContent, nil
+	embedding, err := s.hasherClient.GetEmbeddingFromImage(privateImageUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	vector, err := s.vsClient.SaveVector(imageId, embedding)
+	if err != nil {
+		return nil, err
+	}
+
+	vector.ImagePath = imageUrl
+
+	return vector, nil
 }
