@@ -1,7 +1,9 @@
 import axios from "axios";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"
 
 export const Upload = () => {
+  const navigate = useNavigate();
   const [dragging, setDragging] = useState(false);
   const [files, setFiles] = useState([]);
   const [url, setUrl] = useState('')
@@ -63,9 +65,15 @@ export const Upload = () => {
 
   }
 
-  const handleAdd = async () => {
-    console.log("add")
-  }
+  // const handleAdd = async () => {
+  //   try {
+  //     const response = await axios.get(url, { responseType: 'stream' });
+  //     addFile(response["data"])
+
+  //   } catch (error) {
+  //     console.error('Error downloading image:', error);
+  //   }
+  // }
 
   const handleSave = async () => {
     //TODO: limit upload to one or make enable bulk upload
@@ -73,7 +81,10 @@ export const Upload = () => {
     const form = new FormData();
     form.append('file', files[0]);
     await axios.post(url, form).then(
-      console.log("success")
+      _ => {
+        console.log("");
+        navigate('/collection')
+      }
     ).catch(
       (error) => {
         console.log(error)
@@ -83,7 +94,13 @@ export const Upload = () => {
 
   return (
 
-    <div className="flex flex-col">
+    <div>
+      <div className="flex flex-row m-6 p-1">
+        <h1 className="text-2xl text-indigo-900 font-bold">Upload</h1>
+        <div className="ml-6">
+          <button onClick={handleSave} className="bg-indigo-400 rounded p-1">Save</button>
+        </div>
+      </div>
       <div className="max-w-xl m-5 mb-1"
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
@@ -106,15 +123,15 @@ export const Upload = () => {
           <input onChange={handleBrowse} type="file" name="file_upload" className="hidden" />
         </label>
       </div>
-      <div className="m-5 mt-1 mb-1">
-        <input value={url}
-          type="text"
-          className="bg-indigo-100 border-black center text-center text-indigo-900 p-1 pl-14 pr-14 m-1"
-          placeholder="Link from the web"
-          onChange={(e) => setUrl(e.target.value)} />
-        <button onClick={handleAdd} className="bg-indigo-400 rounded p-1">Add</button>
+      {/* <div className="m-5 mt-1 mb-1"> */}
+      {/*   <input value={url} */}
+      {/*     type="text" */}
+      {/*     className="bg-indigo-100 border-black center text-center text-indigo-900 p-1 pl-14 pr-14 m-1" */}
+      {/*     placeholder="Link from the web" */}
+      {/*     onChange={(e) => setUrl(e.target.value)} /> */}
+      {/*   <button onClick={handleAdd} className="bg-indigo-400 rounded p-1">Add</button> */}
 
-      </div>
+      {/* </div> */}
 
 
       <div className="flex flex-row m-5 mt-1">
@@ -129,9 +146,6 @@ export const Upload = () => {
 
       </div>
 
-      <div className="m-5 mt-1">
-        <button onClick={handleSave} className="bg-indigo-400 rounded p-1">Save</button>
-      </div>
 
     </div>
   );

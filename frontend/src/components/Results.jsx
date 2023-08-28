@@ -14,7 +14,7 @@ export const Results = () => {
   }, [])
 
   return (
-    <div>
+    <div className="flex flex-row flex-wrap justify-center">
       {results.map((result) => (
         <div key={result.path}>
           <Card url={result.path} />
